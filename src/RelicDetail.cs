@@ -13,12 +13,13 @@ namespace RelicLoadoutJournal
         internal static RelicDetail Resolve(string id)
         {
             var detail = new RelicDetail { Name = id, Description = "Relic unavailable in this installation." };
-            var relic = AddressablesManager.Instance?.GetRelic(id);
-            if (relic == null) return detail;
             try
             {
+                var relic = AddressablesManager.Instance?.GetRelic(id);
+                if (relic == null) return detail;
                 detail.Icon = relic.GetIcon();
-                detail.Name = relic.GetTitle();
+                var title = relic.GetTitle();
+                if (!string.IsNullOrWhiteSpace(title)) detail.Name = title;
                 detail.Description = relic.GetDescription();
             }
             catch (Exception e)

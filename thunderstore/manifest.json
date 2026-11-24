@@ -1,6 +1,6 @@
 {
   "name": "RelicLoadoutJournal",
-  "version_number": "0.1.0",
+  "version_number": "0.1.1",
   "website_url": "https://github.com/GKJ-Super-Fantasy-Kingdom/relic-loadout-journal",
   "description": "Revisit completed runs from the title menu. Inspect each kingdom, hero, final day and held relic with keyboard, mouse or controller.",
   "dependencies": [

@@ -1,6 +1,6 @@
 # Relic Loadout Journal
 
-Open **Relic Journal** on the title menu to browse completed runs for your current game profile. The newest run opens first. Choose **Older run** or **Newer run** to switch runs, then **Previous relic** or **Next relic** to inspect each held relic and its description. Use the game's menu navigation, select and back controls, or click the buttons.
+Open **Relic Journal** beside **Play** on the title menu. The newest run opens first. Select a held-relic icon to inspect its description. A line under the icon marks the relic on display. Use **Previous relic** and **Next relic** to step through the full loadout, and **Older run** or **Newer run** to switch runs. The game's Back control returns focus to the journal button.
 
 The journal starts when the mod is installed. Accepting the final result records the kingdom, hero, final day and held relics. Saving, continuing or retrying a day keeps the run open. Each game run ID has one entry per profile.
 

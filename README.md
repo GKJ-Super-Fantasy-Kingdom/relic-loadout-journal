@@ -14,7 +14,7 @@ python package.py
 python tests/run.py --save "path/to/copied/1_human_game.data"
 ```
 
-The ZIP is written to `dist/RelicLoadoutJournal-0.1.0.zip`. The check runner accepts `--game` and `--profile` for other installations. It loads the packaged DLL into embedded Mono, checks the installed game's save and completion methods, and exercises the journal, focus navigation and layout using the supplied save and temporary storage.
+The ZIP is written to `dist/RelicLoadoutJournal-0.1.1.zip`. The check runner accepts `--game` and `--profile` for other installations. It loads the packaged DLL into embedded Mono, checks the installed game's save and completion methods, and exercises the journal, focus navigation and layout using the supplied save and temporary storage.
 
 For gameplay review, use a copied save in an isolated game data location. A BepInEx mod profile selects plugins, while Unity chooses the save directory separately. Check a real save/continue through accepted completion, known relic icons and descriptions, menu focus and prompts, and readability at 1× and 1.5×.
 

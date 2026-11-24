@@ -168,8 +168,17 @@ internal static class RunChecks
             Set(screen, name, button);
             return button;
         }).ToArray();
+        Button[] slots = Enumerable.Range(0, 5).Select(i => (Button)SceneObject<TestButton>()).ToArray();
+        Set(screen, "slots", slots);
+        for (int visible = 0; visible <= slots.Length; visible++)
+        for (int current = 0; current < Math.Max(1, visible); current++)
         for (int mask = 0; mask < 16; mask++)
         {
+            const int start = 5;
+            Set(screen, "stripStart", start);
+            Set(screen, "relicIndex", start + current);
+            Set(screen, "visibleSlots", visible);
+            for (int i = 0; i < slots.Length; i++) Set(slots[i], "m_Interactable", i < visible);
             for (int i = 0; i < buttons.Length; i++)
                 Set(buttons[i], "m_Interactable", i == 4 || (mask & (1 << i)) != 0);
             AccessTools.Method(type, "WireNavigation").Invoke(screen, null);
@@ -185,8 +194,15 @@ internal static class RunChecks
                 foreach (var target in new[] { nav.selectOnLeft, nav.selectOnRight, nav.selectOnUp, nav.selectOnDown })
                     queue.Enqueue(target);
             }
-            if (visited.Count != buttons.Count(b => b.interactable)) throw new Exception("Unreachable action");
+            if (visited.Count != buttons.Count(b => b.interactable) + visible) throw new Exception("Unreachable action");
+            for (int i = 0; i < visible; i++)
+            {
+                var nav = slots[i].navigation;
+                if ((i > 0 && nav.selectOnLeft != slots[i - 1]) ||
+                    (i + 1 < visible && nav.selectOnRight != slots[i + 1]) || nav.selectOnDown != buttons[4])
+                    throw new Exception("Incorrect relic strip direction or Back route");
+            }
         }
-        Console.WriteLine("PASS directional focus reaches all enabled actions across 16 pagination states");
+        Console.WriteLine("PASS directional focus and Back across 256 empty, full and partial relic strip states");
     }
 }
