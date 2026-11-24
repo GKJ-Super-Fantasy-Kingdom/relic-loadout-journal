@@ -37,11 +37,17 @@ namespace RelicLoadoutJournal
             style = first.GetComponentInChildren<TextMeshProUGUI>(true);
             buttonStyle = first.GetComponent<Image>();
             var canvas = first.GetComponentInParent<Canvas>(true).rootCanvas;
-            launcher = MakeButton(settings.transform.parent, "Relic Journal", Open);
+            var playRect = (RectTransform)first.transform;
+            launcher = MakeButton(playRect.parent, "Relic Journal", Open);
             var launcherRect = (RectTransform)launcher.transform;
-            launcherRect.sizeDelta = ((RectTransform)first.transform).sizeDelta;
+            // The title scene serializes a disabled layout group and positions its buttons by hand.
+            // Anchor beside Play so changing scale also moves the journal with the native menu.
+            launcherRect.anchorMin = playRect.anchorMin;
+            launcherRect.anchorMax = playRect.anchorMax;
+            launcherRect.pivot = playRect.pivot;
+            launcherRect.sizeDelta = playRect.sizeDelta;
+            launcherRect.anchoredPosition = playRect.anchoredPosition - Vector2.right * (playRect.rect.width + 12);
             launcherRect.SetSiblingIndex(settings.transform.GetSiblingIndex());
-            // The title menu uses its own vertical layout and automatic navigation.
             Current = this;
             overlay = Box(canvas.transform, "Relic Loadout Journal", new Color32(20, 14, 12, 237));
             Stretch(overlay);
@@ -76,7 +82,7 @@ namespace RelicLoadoutJournal
             Place(icon.rectTransform, 24, 48, 90, 90);
             relicName = Label(entry, "", 32, Gold);
             Place(relicName.rectTransform, 130, 12, 570, 48);
-            description = Label(entry, "", 24, Parchment);
+            description = Label(entry, "", 30, Parchment);
             Place(description.rectTransform, 130, 62, 570, 116);
             previous = PageButton("Previous relic", 30, 398, () => ChangeRelic(-1));
             next = PageButton("Next relic", 570, 398, () => ChangeRelic(1));
@@ -176,9 +182,20 @@ namespace RelicLoadoutJournal
             var detail = id == null ? null : RelicDetail.Resolve(id);
             icon.sprite = detail?.Icon;
             icon.enabled = icon.sprite != null;
+            relicName.fontSizeMin = 21;
+            if (icon.enabled)
+            {
+                Place(relicName.rectTransform, 130, 12, 570, 48);
+                Place(description.rectTransform, 130, 62, 570, 116);
+            }
+            else
+            {
+                Place(relicName.rectTransform, 18, 8, 688, 90);
+                Place(description.rectTransform, 18, 99, 688, 78);
+            }
             relicName.text = detail?.Name ?? "";
             description.richText = detail != null;
-            description.text = detail?.Description ?? (run != null ? "No relics held." : readFailed ? "See the BepInEx log for details."
+            description.text = detail?.Description?.Replace("<color=blue>", "<color=#9DC4FF>").Replace("<color=purple>", "<color=#D7A4FF>") ?? (run != null ? "No relics held." : readFailed ? "See the BepInEx log for details."
                 : "Finish a run to see its relics here.");
             WireNavigation();
         }
@@ -225,15 +242,16 @@ namespace RelicLoadoutJournal
             image.sprite = buttonStyle.sprite;
             image.type = buttonStyle.type;
             image.pixelsPerUnitMultiplier = buttonStyle.pixelsPerUnitMultiplier;
-            var button = rect.gameObject.AddComponent<Button>();
+            var button = rect.gameObject.AddComponent<JournalButton>();
             button.targetGraphic = image;
             var colors = button.colors;
-            colors.normalColor = new Color32(165, 131, 97, 255);
+            colors.normalColor = new Color32(115, 84, 60, 255);
             colors.selectedColor = colors.highlightedColor = Gold;
             colors.disabledColor = new Color32(85, 74, 68, 190);
             button.colors = colors;
             button.onClick.AddListener(() => click());
-            var label = Label(rect, caption, 24, Color.white);
+            var label = Label(rect, caption, 28, Color.white);
+            button.SetCaption(label);
             Stretch(label.rectTransform, 3);
             return button;
         }
@@ -247,6 +265,9 @@ namespace RelicLoadoutJournal
             text.fontSharedMaterial = style.fontSharedMaterial;
             text.spriteAsset = style.spriteAsset;
             text.alignment = TextAlignmentOptions.Center;
+            // Inactive TMP components otherwise replace these size limits on first activation.
+            text.fontSize = size;
+            text.enableWordWrapping = true;
             text.enableAutoSizing = true;
             text.fontSizeMin = 13;
             text.fontSizeMax = size;
