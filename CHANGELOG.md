@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+Clarify the mod’s description and compatibility for players.
+
 ## 0.1.2
 
 - The new package icon shows the Weak Spot relic on an open journal page, alongside a crown marking the recorded kingdom.

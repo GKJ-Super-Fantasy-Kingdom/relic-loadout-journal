@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace RelicLoadoutJournal
 {
-    [BepInPlugin(Id, "Relic Loadout Journal", "0.1.2")]
+    [BepInPlugin(Id, "Relic Loadout Journal", "0.1.3")]
     public sealed class Plugin : BaseUnityPlugin
     {
         internal const string Id = "sfk.relicloadoutjournal";
