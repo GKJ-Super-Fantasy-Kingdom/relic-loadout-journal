@@ -54,3 +54,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and commit conventions.
 ## License
 
 Original mod code is licensed under the [MIT License](LICENSE). Super Fantasy Kingdom and its assets belong to their respective owners.
+
+## Support
+
+[Support GKJ Games on Ko-fi](https://ko-fi.com/gkj_games)
