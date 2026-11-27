@@ -6,7 +6,6 @@ using SuperFantasyKingdom.TitleScreen;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 namespace RelicLoadoutJournal
@@ -18,8 +17,11 @@ namespace RelicLoadoutJournal
 
         private static readonly Color Gold = new Color32(255, 217, 146, 255);
         private static readonly Color Parchment = new Color32(255, 239, 202, 255);
-        private TextMeshProUGUI style, page, summary, count, relicName, description;
+        private TextMeshProUGUI style, page, summary, count, relicName, description, missingIcon;
         private Image buttonStyle, icon, crest;
+        private JournalButtonArt buttonArt;
+        private JournalButtonArt.Plates launcherPlates, actionPlates, backPlates;
+        private RectTransform detailArt, detailTitle;
         private TextMeshProUGUI day, completed;
         private const int StripSize = 5;
         private readonly Button[] slots = new Button[StripSize];
@@ -29,7 +31,6 @@ namespace RelicLoadoutJournal
         private int stripStart, visibleSlots;
         private RectTransform overlay, sheet, play, viewport;
         private Button launcher, newer, older, previous, next, back;
-        private ControlHint submitHint, cancelHint;
         private Action<TitleScreenManager> openOverlay, closeOverlay;
         private TitleScreenManager title;
         private List<CompletedRun> runs;
@@ -43,11 +44,15 @@ namespace RelicLoadoutJournal
             closeOverlay = AccessTools.MethodDelegate<Action<TitleScreenManager>>(AccessTools.Method(typeof(TitleScreenManager), "CloseOverlay"));
             style = first.GetComponentInChildren<TextMeshProUGUI>(true);
             buttonStyle = first.GetComponent<Image>();
+            buttonArt = new JournalButtonArt();
+            launcherPlates = TryPlates(false, ButtonColors(false, true));
+            actionPlates = TryPlates(false, ButtonColors(false, false));
+            backPlates = TryPlates(true, ButtonColors(true, false));
             var canvas = first.GetComponentInParent<Canvas>(true).rootCanvas;
             var playRect = (RectTransform)first.transform;
             play = playRect;
             viewport = (RectTransform)canvas.transform;
-            launcher = MakeButton(playRect.parent, "Relic Journal", Open);
+            launcher = MakeButton(playRect.parent, "Relic Journal", Open, titleLauncher: true);
             var launcherRect = (RectTransform)launcher.transform;
             // The title scene serializes a disabled layout group and positions its buttons by hand.
             // Anchor beside Play so changing scale also moves the journal with the native menu.
@@ -59,7 +64,7 @@ namespace RelicLoadoutJournal
             launcherRect.SetSiblingIndex(settings.transform.GetSiblingIndex());
             FitLauncher();
             Current = this;
-            overlay = Box(canvas.transform, "Relic Loadout Journal", new Color32(20, 14, 12, 237));
+            overlay = Box(canvas.transform, "Relic Loadout Journal", new Color32(20, 14, 12, 179));
             Stretch(overlay);
             overlay.gameObject.SetActive(false);
             sheet = Box(overlay, "Journal", new Color32(94, 67, 46, 255));
@@ -93,22 +98,32 @@ namespace RelicLoadoutJournal
             day = Label(sheet, "", 29, Parchment);
             day.alignment = TextAlignmentOptions.MidlineRight;
             Place(day.rectTransform, 550, 137, 186, 50);
-            var entry = Box(sheet, "Held relic", new Color32(37, 28, 25, 255));
-            Place(entry, 28, 195, 724, 190);
-            icon = Box(entry, "Relic icon", Color.white).GetComponent<Image>();
+            var entry = Box(sheet, "Held relic", new Color32(123, 85, 56, 255));
+            Place(entry, 28, 195, 724, 212);
+            var detailBody = Box(entry, "Relic detail", new Color32(37, 28, 25, 255));
+            Stretch(detailBody, 2);
+            detailArt = Box(entry, "Relic illustration", new Color32(90, 60, 42, 255));
+            Place(detailArt, 14, 16, 132, 180);
+            var well = Box(detailArt, "Relic icon well", new Color32(55, 39, 33, 255));
+            Place(well, 2, 2, 128, 142);
+            icon = Box(well, "Relic icon", Color.white).GetComponent<Image>();
             icon.raycastTarget = false;
             icon.preserveAspect = true;
-            Place(icon.rectTransform, 24, 48, 90, 90);
-            relicName = Label(entry, "", 32, Gold);
+            Place(icon.rectTransform, 9, 16, 110, 110);
+            missingIcon = Label(well, "?", 50, Gold);
+            Stretch(missingIcon.rectTransform);
+            count = Label(detailArt, "", 19, Parchment);
+            Place(count.rectTransform, 2, 146, 128, 32);
+            detailTitle = Box(entry, "Relic title band", new Color32(73, 47, 34, 255));
+            relicName = Label(detailTitle, "", 32, Gold);
             relicName.alignment = TextAlignmentOptions.MidlineLeft;
             relicName.overflowMode = TextOverflowModes.Ellipsis;
             relicName.parseCtrlCharacters = false;
-            description = Label(entry, "", 30, Parchment);
-            description.alignment = TextAlignmentOptions.MidlineLeft;
-            previous = PageButton("Previous relic", 30, 398, () => ChangeRelic(-1));
-            next = PageButton("Next relic", 570, 398, () => ChangeRelic(1));
-            count = Label(entry, "", 21, Parchment);
-            count.alignment = TextAlignmentOptions.MidlineLeft;
+            Stretch(relicName.rectTransform, 9);
+            description = Label(entry, "", 27, Parchment);
+            description.paragraphSpacing = 5;
+            previous = PageButton("Previous relic", 30, 425, () => ChangeRelic(-1), "<  Previous relic");
+            next = PageButton("Next relic", 570, 425, () => ChangeRelic(1), "Next relic  >");
             for (int i = 0; i < StripSize; i++)
             {
                 int slot = i;
@@ -122,12 +137,11 @@ namespace RelicLoadoutJournal
                 slotIcons[i] = image;
                 var mark = Box(button.transform, "Inspected relic", Parchment);
                 mark.GetComponent<Image>().raycastTarget = false;
-                Place(mark, 7, 50, 34, 3);
+                Place(mark, 7, 42, 34, 3);
                 markers[i] = mark.gameObject;
             }
-            back = PageButton("Back", 300, 460, Close);
-            submitHint = new ControlHint(sheet, "Select", 30, Label);
-            cancelHint = new ControlHint(sheet, "Back", 540, Label);
+            back = PageButton("Back", 329, 488, Close);
+            Place((RectTransform)back.transform, 329, 488, 122, 36);
         }
 
         private void Open()
@@ -173,10 +187,7 @@ namespace RelicLoadoutJournal
                 return;
             }
             Fit();
-            var module = EventSystem.current?.currentInputModule as InputSystemUIInputModule;
             bool pad = GamepadManager.Instance.IsGamepadInUse();
-            submitHint.Refresh(module?.submit?.action, pad);
-            cancelHint.Refresh(module?.cancel?.action, pad);
             // Restore focus after a pointer click on the page or a device switch.
             if (pad && EventSystem.current != null)
             {
@@ -205,7 +216,7 @@ namespace RelicLoadoutJournal
             sheet.localScale = Vector3.one * FitScale(overlay.rect.size);
         }
 
-        private static readonly Vector2 PageSize = new Vector2(780, 520);
+        private static readonly Vector2 PageSize = new Vector2(780, 544);
 
         internal static float FitScale(Vector2 available) => Mathf.Clamp(
             Mathf.Min(available.x / (PageSize.x + 20), available.y / (PageSize.y + 20)), 0, 1);
@@ -257,23 +268,19 @@ namespace RelicLoadoutJournal
             var detail = id == null ? null : Detail(id);
             icon.sprite = detail?.Icon;
             icon.enabled = icon.sprite != null;
-            relicName.fontSizeMin = 21;
-            if (icon.enabled)
-            {
-                Place(count.rectTransform, 138, 12, 560, 27);
-                Place(relicName.rectTransform, 138, 42, 560, 47);
-                Place(description.rectTransform, 138, 91, 560, 86);
-            }
-            else
-            {
-                Place(count.rectTransform, 22, 10, 680, 27);
-                Place(relicName.rectTransform, 22, 39, 680, 80);
-                Place(description.rectTransform, 22, 119, 680, 61);
-            }
-            if (held == 0) Place(description.rectTransform, 22, 22, 680, 145);
+            bool hasRelic = detail != null;
+            detailArt.gameObject.SetActive(hasRelic);
+            detailTitle.gameObject.SetActive(hasRelic);
+            missingIcon.enabled = !icon.enabled;
+            float titleHeight = icon.enabled ? 54 : 76;
+            Place(detailTitle, 160, 16, 550, titleHeight);
+            Place(description.rectTransform, hasRelic ? 169 : 22, hasRelic ? titleHeight + 24 : 22,
+                hasRelic ? 528 : 680, hasRelic ? 174 - titleHeight : 166);
+            description.alignment = hasRelic ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.Center;
+            relicName.fontSizeMin = 19;
             relicName.text = detail?.Name ?? "";
-            description.richText = detail != null;
-            description.text = detail?.Description?.Replace("<color=blue>", "<color=#9DC4FF>").Replace("<color=purple>", "<color=#D7A4FF>") ?? (run != null ? "No relics held." : readFailed ? "See the BepInEx log for details."
+            description.richText = hasRelic;
+            description.text = detail?.Description ?? (run != null ? "No relics held." : readFailed ? "See the BepInEx log for details."
                 : "Finish a run to see its relics here.");
             stripStart = (relicIndex / StripSize) * StripSize;
             visibleSlots = Math.Min(held - stripStart, StripSize);
@@ -281,7 +288,7 @@ namespace RelicLoadoutJournal
             {
                 slots[i].gameObject.SetActive(i < visibleSlots);
                 if (i >= visibleSlots) continue;
-                Place((RectTransform)slots[i].transform, 390 - (visibleSlots * 56 - 8) / 2f + i * 56, 396, 48, 48);
+                Place((RectTransform)slots[i].transform, 390 - (visibleSlots * 56 - 8) / 2f + i * 56, 423, 48, 48);
                 var thumbnail = Detail(run.Relics[stripStart + i]).Icon;
                 slotIcons[i].sprite = thumbnail;
                 slotIcons[i].enabled = thumbnail != null;
@@ -350,14 +357,37 @@ namespace RelicLoadoutJournal
                 selectOnLeft = horizontal, selectOnRight = horizontal, selectOnUp = up, selectOnDown = down };
         }
 
-        private Button PageButton(string caption, float x, float y, Action click)
+        private Button PageButton(string caption, float x, float y, Action click, string display = null)
         {
-            var button = MakeButton(sheet, caption, click);
+            var button = MakeButton(sheet, display ?? caption, click, cancel: caption == "Back");
+            button.name = caption;
             Place((RectTransform)button.transform, x, y, 180, 44);
             return button;
         }
 
-        private Button MakeButton(Transform parent, string caption, Action click)
+        private static ColorBlock ButtonColors(bool cancel, bool titleLauncher)
+        {
+            var colors = ColorBlock.defaultColorBlock;
+            colors.normalColor = titleLauncher ? new Color32(115, 84, 60, 255)
+                : cancel ? new Color32(106, 32, 25, 255) : new Color32(94, 66, 49, 255);
+            colors.selectedColor = colors.highlightedColor = titleLauncher ? Gold
+                : (Color)(cancel ? new Color32(143, 44, 31, 255) : new Color32(123, 84, 55, 255));
+            colors.pressedColor = colors.normalColor * .82f;
+            colors.disabledColor = new Color32(85, 74, 68, 190);
+            return colors;
+        }
+
+        private JournalButtonArt.Plates TryPlates(bool cancel, ColorBlock colors)
+        {
+            try { return buttonArt.Create(cancel, colors); }
+            catch (Exception error)
+            {
+                Plugin.Warn("Could not skin the journal controls: " + error.Message);
+                return null;
+            }
+        }
+
+        private JournalButton MakeButton(Transform parent, string caption, Action click, bool cancel = false, bool titleLauncher = false)
         {
             var rect = Box(parent, caption, Color.white);
             var image = rect.GetComponent<Image>();
@@ -366,14 +396,10 @@ namespace RelicLoadoutJournal
             image.pixelsPerUnitMultiplier = buttonStyle.pixelsPerUnitMultiplier;
             var button = rect.gameObject.AddComponent<JournalButton>();
             button.targetGraphic = image;
-            var colors = button.colors;
-            colors.normalColor = new Color32(115, 84, 60, 255);
-            colors.selectedColor = colors.highlightedColor = Gold;
-            colors.disabledColor = new Color32(85, 74, 68, 190);
-            button.colors = colors;
+            button.colors = ButtonColors(cancel, titleLauncher);
             button.onClick.AddListener(() => click());
             var label = Label(rect, caption, 28, Color.white);
-            button.SetCaption(label);
+            button.UseArt(titleLauncher ? launcherPlates : cancel ? backPlates : actionPlates, label, titleLauncher);
             Stretch(label.rectTransform, 3);
             return button;
         }
@@ -429,6 +455,7 @@ namespace RelicLoadoutJournal
             if (IsOpen && title != null) Close();
             if (launcher != null) Destroy(launcher.gameObject);
             if (overlay != null) Destroy(overlay.gameObject);
+            buttonArt?.Dispose();
         }
     }
 }

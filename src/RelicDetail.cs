@@ -20,7 +20,7 @@ namespace RelicLoadoutJournal
                 detail.Icon = relic.GetIcon();
                 var title = relic.GetTitle();
                 if (!string.IsNullOrWhiteSpace(title)) detail.Name = title;
-                detail.Description = relic.GetDescription();
+                detail.Description = ReadableDescription(relic.GetDescription());
             }
             catch (Exception e)
             {
@@ -29,5 +29,11 @@ namespace RelicLoadoutJournal
             }
             return detail;
         }
+
+        private static string ReadableDescription(string text) => text?
+            .Replace("<color=blue>", "<color=#9DC4FF>")
+            .Replace("<color=purple>", "<color=#D7A4FF>")
+            // Cursed Relics uses dark red for the curse on its light native card.
+            .Replace("<color=#991F29>", "<color=#FFAAA1>");
     }
 }

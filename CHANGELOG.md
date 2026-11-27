@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- Match the game’s stepped button borders for hover, controller focus and press, with muted styling for unavailable directions.
+- Remove the duplicate Select and Back shortcut labels while keeping controller confirmation and the Back button.
+- Give relic icons and descriptions more room and show Gift and Curse effects when available.
+- Refresh the package icon and screenshots.
+
 ## 0.1.3
 
 Clarify the mod’s description and compatibility for players.
